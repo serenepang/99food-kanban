@@ -739,7 +739,7 @@ function inPicked(picked, v){ return picked.length === 0 || picked.includes(v); 
    本机后来改的存在 LOCAL 里（1 判假、0 撤销），发布前只影响自己这一份。 */
 const FAKE_STORE = "99food.settle.fake.v2";
 const FAKE_TEXT = "判定为假量";
-const FAKE_MARKS = {"cpa|2026-08-01|604":1};
+const FAKE_MARKS = {};
 
 function loadLocal(){
   try { return JSON.parse(localStorage.getItem(FAKE_STORE) || "{}"); }
