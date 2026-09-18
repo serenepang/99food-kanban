@@ -699,13 +699,15 @@ function renderSpend(){
   const bi = rows.filter(r => !r.biless);
   const cost = round2(rows.reduce((s, r) => s + dayCost(r.d), 0));
 
+  const profit = round2(sum(bi,"rev") - cost);
   document.getElementById("stats").innerHTML =
     stat(int(sum(bi,"efos")), "BI efos") +
     stat(int(sum(bi,"cta")), "CTA efos") +
     stat(int(sum(bi,"ctv")), "CTV efos") +
     stat(moneyUsd(sum(bi,"rev")), "REV") +
     stat(moneyUsd(cost), "COST") +
-    stat(moneyUsd(round2(sum(bi,"rev") - cost)), "PROFIT");
+    stat(moneyUsd(profit), "PROFIT") +
+    stat(pctRate(profit, sum(bi,"rev")), "profit rate");
 
   drawTrend(bi);
   drawBars(bi);
@@ -720,21 +722,23 @@ function renderSpend(){
     stat(one(spPaid / (paid.length || 1)), "日均 efos");
 
   document.getElementById("table").innerHTML =
-    '<thead><tr><th>日期</th><th>BI efos</th><th>CTA</th><th>CTV</th><th>REV</th><th>COST</th><th>PROFIT</th></tr></thead><tbody>' +
+    '<thead><tr><th>日期</th><th>BI efos</th><th>CTA</th><th>CTV</th><th>REV</th><th>COST</th><th>PROFIT</th><th>profit rate</th></tr></thead><tbody>' +
     rows.map(r => {
       const c = dayCost(r.d);
       if (r.biless) {
         return '<tr class="nobi"><td><i class="tag paid"></i>'+r.d+'</td>' +
           '<td>—</td><td>—</td><td>—</td><td>—</td>' +
-          '<td>'+moneyUsd(c)+'</td><td>—</td></tr>';
+          '<td>'+moneyUsd(c)+'</td><td>—</td><td>—</td></tr>';
       }
+      const p = round2(r.rev - c);
       return '<tr><td><i class="tag'+(r.d >= CUT ? ' paid' : '')+'"></i>'+r.d+'</td>' +
         '<td>'+int(r.efos)+'</td><td>'+int(r.cta)+'</td><td>'+int(r.ctv)+'</td>' +
-        '<td>'+moneyUsd(r.rev)+'</td><td>'+moneyUsd(c)+'</td><td>'+moneyUsd(round2(r.rev - c))+'</td></tr>';
+        '<td>'+moneyUsd(r.rev)+'</td><td>'+moneyUsd(c)+'</td><td>'+moneyUsd(p)+'</td>' +
+        '<td>'+pctRate(p, r.rev)+'</td></tr>';
     }).join("") +
     '<tr class="total"><td>合计</td><td>'+int(sum(bi,"efos"))+'</td><td>'+int(sum(bi,"cta"))+'</td><td>'+int(sum(bi,"ctv")) +
     '</td><td>'+moneyUsd(sum(bi,"rev"))+'</td><td>'+moneyUsd(cost) +
-    '</td><td>'+moneyUsd(round2(sum(bi,"rev") - cost))+'</td></tr>' +
+    '</td><td>'+moneyUsd(profit)+'</td><td>'+pctRate(profit, sum(bi,"rev"))+'</td></tr>' +
     '</tbody>';
 
   const miss = rows.filter(r => r.biless).map(r => r.d);
@@ -829,6 +833,10 @@ function dayCost(d){
   return round2((SETTLE.cpa || []).filter(x => x.d === d).reduce((s, x) => s + effAmount(x), 0));
 }
 function dayProfit(r){ return round2(r.rev - dayCost(r.d)); }
+function pctRate(profit, rev){
+  if (!rev) return "—";
+  return (profit / rev * 100).toFixed(2) + "%";
+}
 /* 当天被备注三扣掉的金额，用来在日消耗表下面写一句提示 */
 function dayFakeCut(d){
   return round2((SETTLE.cpa || []).filter(x => x.d === d)
